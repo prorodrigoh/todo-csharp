@@ -1,4 +1,7 @@
+using Microsoft.Extensions.Options;
 using Models;
+using MongoDB.Driver;
+using Settings;
 
 namespace Services;
 
@@ -7,20 +10,30 @@ public interface ITodoItemService {
     Task<IEnumerable<TodoItem>> GetAllTodoItems();
     Task<TodoItem> GetTodoItemById(string id);
     Task<TodoItem> UpdateItemById(string id, TodoItem todoItem);
-    Task<TodoItem> CreateItemById(TodoItem todoItem);
-    
-
+    Task<TodoItem> CreateTodoItem(TodoItem newTodoItem);
 }
 public class TodoItemService : ITodoItemService
 {
-    public Task<TodoItem> CreateItemById(TodoItem todoItem)
+    private readonly IMongoCollection<TodoItem> todoItemCollection;
+    public TodoItemService(IOptions<TodoDBSettings> todoDbSettings)
     {
-        throw new NotImplementedException();
+        var client = new MongoClient(todoDbSettings.Value.ConnectionString);
+        var db = client.GetDatabase(todoDbSettings.Value.DatabaseName);
+        todoItemCollection = db.GetCollection<TodoItem>(todoDbSettings.Value.CollectionName);
+        
+    }
+    
+    // CRUD actions 
+    public async Task<TodoItem> CreateTodoItem(TodoItem newTodoItem)
+    {
+        await todoItemCollection.InsertOneAsync(newTodoItem);
+        return newTodoItem;
     }
 
-    public Task<IEnumerable<TodoItem>> GetAllTodoItems()
+    public async Task<IEnumerable<TodoItem>> GetAllTodoItems()
     {
-        throw new NotImplementedException();
+        var res = await todoItemCollection.FindAsync(x => true); // x is a filter to get all = true
+        return res.ToList();
     }
 
     public Task<TodoItem> GetTodoItemById(string id)
