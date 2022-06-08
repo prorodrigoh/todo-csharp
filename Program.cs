@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Models;
 using Services;
 using Settings;
@@ -5,7 +6,15 @@ using Settings;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<TodoDBSettings>(builder.Configuration.GetSection("TodoDB"));
 builder.Services.AddSingleton<ITodoItemService, TodoItemService>();
+builder.Services.AddEndpointsApiExplorer();
+// Works like postman at http://localhost:5191/swagger/index.html
+builder.Services.AddSwaggerGen();
+
+
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 //read
 app.MapGet("/items", async (ITodoItemService todoItemService) => {
